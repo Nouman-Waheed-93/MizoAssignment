@@ -16,12 +16,15 @@ namespace Invector.vCharacterController
         public KeyCode sprintInput = KeyCode.LeftShift;
         public KeyCode fireInput = KeyCode.Mouse0;
         public KeyCode flyInput = KeyCode.Z;
+        public KeyCode increaseHeightInput = KeyCode.R;
+        public KeyCode decreaseHeightInput = KeyCode.F;
 
         [Header("Camera Input")]
         public string rotateCameraXInput = "Mouse X";
         public string rotateCameraYInput = "Mouse Y";
 
         [HideInInspector] public vThirdPersonController cc;
+        [HideInInspector] public AttackHandler attackHandler;
         [HideInInspector] public vThirdPersonCamera tpCamera;
         [HideInInspector] public Camera cameraMain;
 
@@ -56,6 +59,7 @@ namespace Invector.vCharacterController
         protected virtual void InitilizeController()
         {
             cc = GetComponent<vThirdPersonController>();
+            attackHandler = GetComponent<AttackHandler>();
 
             if (cc != null)
                 cc.Init();
@@ -87,6 +91,8 @@ namespace Invector.vCharacterController
             PunchInput();
             FireInput();
             FlyInput();
+            HeightDownInput();
+            HeightUpInput();
         }
 
         public virtual void MoveInput()
@@ -157,25 +163,46 @@ namespace Invector.vCharacterController
         protected virtual void KickInput()
         {
             if (Input.GetKeyDown(kickInput) && IntenseActionConditions())
+            {
                 cc.Kick();
+                attackHandler.ExecuteKick();
+            }
         }
 
         protected virtual void PunchInput()
         {
             if (Input.GetKeyDown(punchInput) && IntenseActionConditions())
+            {
                 cc.Punch();
+                attackHandler.ExecutePunch();
+            }
         }
 
         protected virtual void FireInput()
         {
             if (Input.GetKeyDown(fireInput))
+            {
                 cc.Fire();
+                attackHandler.Fire();
+            }
         }
 
         protected virtual void FlyInput()
         {
             if (Input.GetKeyDown(flyInput))
                 cc.ToggleFlying();
+        }
+
+        protected virtual void HeightUpInput()
+        {
+            if (Input.GetKey(increaseHeightInput))
+                cc.IncreaseHeight();
+        }
+
+        protected virtual void HeightDownInput()
+        {
+            if (Input.GetKey(decreaseHeightInput))
+                cc.DecreaseHeight();
         }
 
         #endregion       

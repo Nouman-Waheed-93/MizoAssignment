@@ -54,6 +54,9 @@ namespace Invector.vCharacterController
         public float limitFallVelocity = -15f;
 
         public float MaxHeight = 100;
+        public float MinHeight = 1;
+        public float HeightChangeSpeed = 1;
+        float currHeight;
 
         [Header("- Ground")]
         [Tooltip("Layers that the character can walk on")]
@@ -125,6 +128,7 @@ namespace Invector.vCharacterController
         {
             animator = GetComponent<Animator>();
             animator.updateMode = AnimatorUpdateMode.AnimatePhysics;
+            currHeight = Mathf.Lerp(MinHeight, MaxHeight, 0.5f);
 
             // slides the character through walls and edges
             frictionPhysics = new PhysicMaterial();
@@ -312,21 +316,12 @@ namespace Invector.vCharacterController
             _rigidbody.useGravity = !isFlying;
             if (isFlying)
             {
-                if (transform.position.y > MaxHeight)
-                {
                     Vector3 vel = _rigidbody.velocity;
-                    vel.y = 0;
+                    vel.y = currHeight - transform.position.y;
                     _rigidbody.velocity = vel;
-                }
-                else
-                {
-                    Vector3 vel = _rigidbody.velocity;
-                    vel.y = 10;
-                    _rigidbody.velocity = vel;
-                }
             }
         }
-
+        
         public virtual void AirControl()
         {
             if ((isGrounded && !isJumping)) return;
@@ -450,6 +445,22 @@ namespace Invector.vCharacterController
             var dir = isStrafing && input.magnitude > 0 ? (transform.right * input.x + transform.forward * input.z).normalized : transform.forward;
             var movementAngle = Vector3.Angle(dir, groundHit.normal) - 90;
             return movementAngle;
+        }
+
+        public void IncreaseHeight()
+        {
+            Debug.Log("Height " + currHeight);
+            currHeight += HeightChangeSpeed * Time.deltaTime;
+            if (currHeight > MaxHeight)
+                currHeight = MaxHeight;
+        }
+
+        public void DecreaseHeight()
+        {
+            Debug.Log("Height " + currHeight);
+            currHeight -= HeightChangeSpeed * Time.deltaTime;
+            if (currHeight < MinHeight)
+                currHeight = MinHeight;
         }
 
         #endregion
