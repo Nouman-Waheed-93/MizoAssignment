@@ -124,5 +124,35 @@ namespace Invector.vCharacterController
             else
                 animator.CrossFadeInFixedTime("JumpMove", .2f);
         }
+
+        public virtual void Kick()
+        {
+            if (input.sqrMagnitude > 0.1f)
+                return;
+            kickCounter = kickTimer;
+            isKicking = true;
+            animator.CrossFadeInFixedTime("Kick", 0.1f);
+        }
+
+        public virtual void Punch()
+        {
+            punchCounter = punchTimer;
+            isPunching = true;
+
+            animator.CrossFadeInFixedTime("Punch", 0.1f);
+        }
+
+        public virtual void Fire()
+        {
+            fireCounter = fireTimer;
+            isFiring = true;
+
+            animator.CrossFadeInFixedTime("Fire", 0.1f);
+        }
+
+        public virtual void ToggleFlying()
+        {
+            isFlying = !isFlying;
+        }
     }
 }

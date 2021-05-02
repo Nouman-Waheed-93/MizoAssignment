@@ -10,8 +10,12 @@ namespace Invector.vCharacterController
         public string horizontalInput = "Horizontal";
         public string verticallInput = "Vertical";
         public KeyCode jumpInput = KeyCode.Space;
+        public KeyCode kickInput = KeyCode.Q;
+        public KeyCode punchInput = KeyCode.E;
         public KeyCode strafeInput = KeyCode.Tab;
         public KeyCode sprintInput = KeyCode.LeftShift;
+        public KeyCode fireInput = KeyCode.Mouse0;
+        public KeyCode flyInput = KeyCode.Z;
 
         [Header("Camera Input")]
         public string rotateCameraXInput = "Mouse X";
@@ -79,6 +83,10 @@ namespace Invector.vCharacterController
             SprintInput();
             StrafeInput();
             JumpInput();
+            KickInput();
+            PunchInput();
+            FireInput();
+            FlyInput();
         }
 
         public virtual void MoveInput()
@@ -131,18 +139,43 @@ namespace Invector.vCharacterController
         /// Conditions to trigger the Jump animation & behavior
         /// </summary>
         /// <returns></returns>
-        protected virtual bool JumpConditions()
+        protected virtual bool IntenseActionConditions()
         {
-            return cc.isGrounded && cc.GroundAngle() < cc.slopeLimit && !cc.isJumping && !cc.stopMove;
+            return cc.isGrounded && cc.GroundAngle() < cc.slopeLimit && !cc.isJumping && !cc.stopMove && !cc.isKicking
+                && !cc.isPunching && !cc.isFiring;
         }
-
+        
         /// <summary>
         /// Input to trigger the Jump 
         /// </summary>
         protected virtual void JumpInput()
         {
-            if (Input.GetKeyDown(jumpInput) && JumpConditions())
+            if (Input.GetKeyDown(jumpInput) && IntenseActionConditions())
                 cc.Jump();
+        }
+
+        protected virtual void KickInput()
+        {
+            if (Input.GetKeyDown(kickInput) && IntenseActionConditions())
+                cc.Kick();
+        }
+
+        protected virtual void PunchInput()
+        {
+            if (Input.GetKeyDown(punchInput) && IntenseActionConditions())
+                cc.Punch();
+        }
+
+        protected virtual void FireInput()
+        {
+            if (Input.GetKeyDown(fireInput))
+                cc.Fire();
+        }
+
+        protected virtual void FlyInput()
+        {
+            if (Input.GetKeyDown(flyInput))
+                cc.ToggleFlying();
         }
 
         #endregion       

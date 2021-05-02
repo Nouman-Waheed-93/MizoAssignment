@@ -37,6 +37,13 @@ namespace Invector.vCharacterController
         [Tooltip("Add Extra jump height, if you want to jump only with Root Motion leave the value with 0.")]
         public float jumpHeight = 4f;
 
+        [Tooltip("How much time the character will take kicking")]
+        public float kickTimer = 0.3f;
+        [Tooltip("How much time the character will take punching")]
+        public float punchTimer = 0.3f;
+        [Tooltip("How much time the character will take firing")]
+        public float fireTimer = 0.3f;
+
         [Tooltip("Speed that the character will move while airborne")]
         public float airSpeed = 5f;
         [Tooltip("Smoothness of the direction while airborne")]
@@ -45,6 +52,8 @@ namespace Invector.vCharacterController
         public float extraGravity = -10f;
         [HideInInspector]
         public float limitFallVelocity = -15f;
+
+        public float MaxHeight = 100;
 
         [Header("- Ground")]
         [Tooltip("Layers that the character can walk on")]
@@ -68,7 +77,11 @@ namespace Invector.vCharacterController
         #region Internal Variables
 
         // movement bools
+        internal bool isFlying;
         internal bool isJumping;
+        internal bool isKicking;
+        internal bool isPunching;
+        internal bool isFiring;
         internal bool isStrafing
         {
             get
@@ -92,6 +105,9 @@ namespace Invector.vCharacterController
         internal float colliderRadius, colliderHeight;      // storage capsule collider extra information        
         internal float heightReached;                       // max height that character reached in air;
         internal float jumpCounter;                         // used to count the routine to reset the jump
+        internal float kickCounter;
+        internal float punchCounter;
+        internal float fireCounter;
         internal float groundDistance;                      // used to know the distance from the ground
         internal RaycastHit groundHit;                      // raycast to hit the ground 
         internal bool lockMovement = false;                 // lock the movement of the controller (not the animation)
@@ -150,6 +166,10 @@ namespace Invector.vCharacterController
             CheckGround();
             CheckSlopeLimit();
             ControlJumpBehaviour();
+            ControlKickBehaviour();
+            ControlPunchBehaviour();
+            ControlFireBehaviour();
+            ControlFLyingBehaviour();
             AirControl();
         }
 
@@ -168,7 +188,7 @@ namespace Invector.vCharacterController
             // calculate input smooth
             inputSmooth = Vector3.Lerp(inputSmooth, input, (isStrafing ? strafeSpeed.movementSmooth : freeSpeed.movementSmooth) * Time.deltaTime);
 
-            if (!isGrounded || isJumping) return;
+            if (!isGrounded || isJumping || isKicking) return;
 
             _direction.y = 0;
             _direction.x = Mathf.Clamp(_direction.x, -1f, 1f);
@@ -245,10 +265,66 @@ namespace Invector.vCharacterController
                 jumpCounter = 0;
                 isJumping = false;
             }
-            // apply extra force to the jump height   
+            // apply extra force to the jump height
             var vel = _rigidbody.velocity;
             vel.y = jumpHeight;
             _rigidbody.velocity = vel;
+        }
+
+        protected virtual void ControlKickBehaviour()
+        {
+            if (!isKicking) return;
+
+            kickCounter -= Time.deltaTime;
+            if(kickCounter <= 0)
+            {
+                kickCounter = 0;
+                isKicking = false;
+            }
+        }
+
+        protected virtual void ControlPunchBehaviour()
+        {
+            if (!isPunching) return;
+
+            punchCounter -= Time.deltaTime;
+            if(punchCounter <= 0)
+            {
+                punchCounter = 0;
+                isPunching = false;
+            }
+        }
+
+        protected virtual void ControlFireBehaviour()
+        {
+            if (!isFiring) return;
+
+            fireCounter -= Time.deltaTime;
+            if (fireCounter <= 0)
+            {
+                fireCounter = 0;
+                isFiring = false;
+            }
+        }
+
+        protected virtual void ControlFLyingBehaviour()
+        {
+            _rigidbody.useGravity = !isFlying;
+            if (isFlying)
+            {
+                if (transform.position.y > MaxHeight)
+                {
+                    Vector3 vel = _rigidbody.velocity;
+                    vel.y = 0;
+                    _rigidbody.velocity = vel;
+                }
+                else
+                {
+                    Vector3 vel = _rigidbody.velocity;
+                    vel.y = 10;
+                    _rigidbody.velocity = vel;
+                }
+            }
         }
 
         public virtual void AirControl()
@@ -296,7 +372,7 @@ namespace Invector.vCharacterController
             if (groundDistance <= groundMinDistance)
             {
                 isGrounded = true;
-                if (!isJumping && groundDistance > 0.05f)
+                if (!isJumping && groundDistance > 0.05f && !isFlying)
                     _rigidbody.AddForce(transform.up * (extraGravity * 2 * Time.deltaTime), ForceMode.VelocityChange);
 
                 heightReached = transform.position.y;
@@ -310,12 +386,12 @@ namespace Invector.vCharacterController
                     // check vertical velocity
                     verticalVelocity = _rigidbody.velocity.y;
                     // apply extra gravity when falling
-                    if (!isJumping)
+                    if (!isJumping && !isFlying)
                     {
                         _rigidbody.AddForce(transform.up * extraGravity * Time.deltaTime, ForceMode.VelocityChange);
                     }
                 }
-                else if (!isJumping)
+                else if (!isJumping && !isFlying)
                 {
                     _rigidbody.AddForce(transform.up * (extraGravity * 2 * Time.deltaTime), ForceMode.VelocityChange);
                 }
